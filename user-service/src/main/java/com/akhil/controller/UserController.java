@@ -1,60 +1,48 @@
 package com.akhil.controller;
 
 import com.akhil.model.User;
-import com.akhil.repo.UserRepo;
+import com.akhil.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 @RestController
+@RequestMapping("/api/users")
 public class UserController {
 
     @Autowired
-    private UserRepo repo;
+    private UserService service;
 
-    @PostMapping("/api/user")
-    public User createUser(@RequestBody @Valid User user){
-        return repo.save(user);
-    }
-    @GetMapping("/api/users")
-    public List<User> getUser(){
-
-        return repo.findAll();
+    @PostMapping
+    public ResponseEntity<User> createUser(@RequestBody @Valid User user) {
+        User createdUser = service.createUser(user);
+        return new ResponseEntity<>(createdUser, HttpStatus.CREATED);
     }
 
-    @GetMapping("/api/user/{id}")
-    public User getUserById(@PathVariable Long id) throws Exception {
-        Optional<User>optional=repo.findById(id);
-        if(optional.isPresent()){
-            return optional.get();
-        }
-        throw  new Exception("User not Found");
+    @GetMapping
+    public ResponseEntity<List<User>> getAllUsers() {
+        return new ResponseEntity<>(service.getAllUser(), HttpStatus.OK);
     }
 
-    @PutMapping("/api/user/{id}")
-    public  User updateUser(@PathVariable Long id,@RequestBody User userDetails) throws Exception {
-        User existingUser = repo.findById(id)
-                .orElseThrow(() -> new Exception("User not found with id: " + id));
+    @GetMapping("/{id}")
+    public ResponseEntity<User> getUserById(@PathVariable Long id) {
+        User user = service.getUserById(id);
+        return new ResponseEntity<>(user, HttpStatus.OK);
+    }
 
-        existingUser.setFullName(userDetails.getFullName());
-        existingUser.setEmail(userDetails.getEmail());
-        existingUser.setPhone(userDetails.getPhone());
-        existingUser.setRole(userDetails.getRole());
-        existingUser.setUpdatedAt(LocalDateTime.now()); // Manually sets update timestamp
+    @PutMapping("/{id}")
+    public ResponseEntity<User> updateUser(@PathVariable Long id, @RequestBody User userDetails) {
+        User updatedUser = service.updateUser(id, userDetails);
+        return new ResponseEntity<>(updatedUser, HttpStatus.OK);
+    }
 
-        return repo.save(existingUser);    }
-
-    @DeleteMapping("/api/user/{id}")
-    public String deleteUserById(@PathVariable Long id) throws Exception {
-        User existingUser = repo.findById(id)
-                .orElseThrow(() -> new Exception("User not found with id: " + id));
-
-        repo.deleteById(id);
-        return "User Deleted with id : "+id;
-
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> deleteUserById(@PathVariable Long id) {
+        String response = service.deleteUser(id);
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 }
