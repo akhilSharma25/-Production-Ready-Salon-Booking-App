@@ -1,5 +1,6 @@
 package com.akhil.model;
 
+import com.akhil.payload.DTO.UserDTO;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -31,13 +32,13 @@ public class Saloon {
     @Column(nullable = false)
     private String city;
 
+
     @Column(nullable = false)
     private Long ownerId;
     @Column(nullable = false)
     private LocalTime openTime;
     @Column(nullable = false)
     private LocalTime closeTime;
-
 
 
 

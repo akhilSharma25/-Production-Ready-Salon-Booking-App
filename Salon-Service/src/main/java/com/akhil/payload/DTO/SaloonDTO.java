@@ -13,7 +13,7 @@ import java.util.List;
 public class SaloonDTO {
 
 
-    private Long id;
+//    private Long id;
     private String name;
 
     private List<String> images;
