@@ -39,7 +39,7 @@ public class CategoryServiceImp implements CategoryService {
 
     public void deleteCategoryById(Long id,Long salonId) {
         Category category=getCategoryById(id);
-        if(category.getSalonId()!=salonId){
+        if (!category.getSalonId().equals(salonId)) {
             throw  new RuntimeException("You don't have permission to delete this category");
         }
         repo.deleteById(id);
