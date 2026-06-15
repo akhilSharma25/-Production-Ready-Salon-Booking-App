@@ -49,6 +49,10 @@ public class BookingServiceImp implements BookingService {
 
     public Boolean isTimeSlotAvailable(SaloonDTO saloonDTO,LocalDateTime bookingStartTime,
                                        LocalDateTime bookingEndTime){
+
+        if (saloonDTO == null || saloonDTO.getOpenTime() == null || saloonDTO.getCloseTime() == null) {
+            throw new IllegalArgumentException("Salon operational hours are missing or invalid.");
+        }
         LocalDateTime salonOpenTime=saloonDTO.getOpenTime().atDate(bookingStartTime.toLocalDate());
         LocalDateTime salonCloseTime=saloonDTO.getCloseTime().atDate(bookingStartTime.toLocalDate());
 
@@ -97,16 +101,46 @@ public class BookingServiceImp implements BookingService {
 
     @Override
     public Booking updateBooking(Long bookingId, BookingStatus status) {
-        return null;
+        Booking booking=getBookingById(bookingId);
+
+        booking.setStatus(status);
+        return repo.save(booking);
     }
 
     @Override
     public List<Booking> getBookingsByDate(LocalDate date, Long salonId) {
-        return List.of();
+
+        List<Booking>allBooking=getBookingBySalon(salonId);
+        if(date==null){
+            return allBooking;
+
+        }
+
+    return     allBooking.stream().filter(booking->isSameData(booking.getStartTime(),date) ||
+                isSameData(booking.getEndTime(),date)).collect(Collectors.toList());
     }
+
+    private boolean isSameData(LocalDateTime dateTime, LocalDate date) {
+
+        return   dateTime.toLocalDate().isEqual(date);
+    }
+
 
     @Override
     public SalonReport getSalonReport(Long salonId) {
-        return null;
+        List<Booking>allBooking=getBookingBySalon(salonId);
+        Double totalEarnings=allBooking.stream().mapToDouble(Booking::getTotalPrice).sum();
+        Integer totalBooking=allBooking.size();
+        List<Booking> cancelledBookings=allBooking.stream().filter(booking -> booking.getStatus().equals(BookingStatus.CANCEL)).collect(Collectors.toList());
+        Double totalRefund=cancelledBookings.stream().mapToDouble(Booking::getTotalPrice).sum();
+        SalonReport report=new SalonReport();
+        report.setSalonId(salonId);
+//        report.setSalonName();
+        report.setCancelBookings(cancelledBookings.size());
+        report.setTotalBookings(totalBooking);
+        report.setTotalEarnings(totalEarnings);
+        report.setTotalRefund(totalRefund);
+
+        return report;
     }
 }
