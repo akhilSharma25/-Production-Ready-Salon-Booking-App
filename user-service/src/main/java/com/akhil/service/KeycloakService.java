@@ -1,19 +1,20 @@
-        package com.akhil.service;
+package com.akhil.service;
 
 import com.akhil.payload.DTO.*;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
 import java.util.List;
 
-        @Service
+@Service
 @RequiredArgsConstructor
 public class KeycloakService {
 
@@ -33,172 +34,178 @@ public class KeycloakService {
     @Value("${keycloak.client-secret}")
     private String clientSecret;
 
+    @Value("${keycloak.clientUuid}")
+    private String clientUuid;
+
     @Value("${keycloak.username}")
     private String username;
 
     @Value("${keycloak.password}")
     private String password;
 
-
-    @Autowired
     private final RestTemplate restTemplate;
 
-    public  void createUser(SignupDto signupDto) throws  RuntimeException{
+    public void createUser(SignupDto signupDto) {
 
-        String ACCESS_TOKEN=getAdminAccessToken(username,password,GRANT_TYPE,null).getAccessToken();
-        Credential credential=new Credential();
+        String accessToken = getAdminAccessToken(username, password, GRANT_TYPE, null).getAccessToken();
+
+        Credential credential = new Credential();
         credential.setTemporary(false);
         credential.setType("password");
         credential.setValue(signupDto.getPassword());
 
-        UserRequest userRequest=new UserRequest();
+        UserRequest userRequest = new UserRequest();
         userRequest.setUsername(signupDto.getUsername());
         userRequest.setEmail(signupDto.getEmail());
         userRequest.setEnabled(true);
         userRequest.setLastName(signupDto.getLastName());
         userRequest.setFirstName(signupDto.getFirstName());
+        userRequest.setCredentials(List.of(credential)); // FIX: credential ab actually attach ho raha hai
 
-
-        HttpHeaders httpHeaders=new HttpHeaders();
+        HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.setContentType(MediaType.APPLICATION_JSON);
-        httpHeaders.setBearerAuth(ACCESS_TOKEN);
+        httpHeaders.setBearerAuth(accessToken);
 
-        HttpEntity<UserRequest>requestHttpEntity=new HttpEntity<>(userRequest,httpHeaders);
-        ResponseEntity<String> response=restTemplate.exchange(
-                KEYCLOAK_ADMIN_API,
-                HttpMethod.POST,
-                requestHttpEntity
-                ,String.class
-        );
+        HttpEntity<UserRequest> requestHttpEntity = new HttpEntity<>(userRequest, httpHeaders);
 
-        if(response.getStatusCode()==HttpStatus.CREATED){
-            System.out.println("User created Successfully");
-            KeycloakUserDTO user=fetchFirstUserByUsername(signupDto.getUsername(), ACCESS_TOKEN);
-            KeycloakRole role=getRoleByName(clientId,ACCESS_TOKEN,signupDto.getRole().toString());
-            List<KeycloakRole>roles=new ArrayList<>();
-            roles.add(role);
-            assignRoleToUser(user.getId(),clientId,roles,ACCESS_TOKEN);
-
-        }else{
-            System.out.println("User creation failed");
-            throw new RuntimeException(response.getBody());
+        try {
+            restTemplate.exchange(
+                    KEYCLOAK_ADMIN_API,
+                    HttpMethod.POST,
+                    requestHttpEntity,
+                    String.class
+            );
+        } catch (HttpClientErrorException | HttpServerErrorException e) {
+            throw new RuntimeException("User creation failed: " + e.getResponseBodyAsString(), e);
         }
-    }
 
+        System.out.println("User created Successfully");
+
+        KeycloakUserDTO user = fetchFirstUserByUsername(signupDto.getUsername(), accessToken);
+
+        // FIX: ab clientId nahi, hardcoded clientUuid use ho raha hai
+        KeycloakRole role = getRoleByName(clientUuid, accessToken, signupDto.getRole().toString());
+        List<KeycloakRole> roles = new ArrayList<>();
+        roles.add(role);
+        assignRoleToUser(user.getId(), clientUuid, roles, accessToken);
+    }
 
     public TokenResponse getAdminAccessToken(String username,
                                              String password,
                                              String grantType,
-                                             String refreshToken){
+                                             String refreshToken) {
 
-        HttpHeaders httpHeaders=new HttpHeaders();
-        httpHeaders.setContentType(MediaType.APPLICATION_JSON);
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.setContentType(MediaType.APPLICATION_FORM_URLENCODED); // FIX: JSON nahi, form-urlencoded chahiye
 
-        MultiValueMap<String,String> requestBody=new LinkedMultiValueMap<>();
-        requestBody.add("grant_type",grantType);
-        requestBody.add("username",username);
-        requestBody.add("password",password);
-        requestBody.add("refresh_token",refreshToken);
-        requestBody.add("client_id",clientId);
-        requestBody.add("client_secret",clientSecret);
-        requestBody.add("scope",scope);
+        MultiValueMap<String, String> requestBody = new LinkedMultiValueMap<>();
+        requestBody.add("grant_type", grantType);
+        requestBody.add("username", username);
+        requestBody.add("password", password);
+        if (refreshToken != null) {                 // FIX: null refresh_token add hi mat karo
+            requestBody.add("refresh_token", refreshToken);
+        }
+        requestBody.add("client_id", clientId);
+        requestBody.add("client_secret", clientSecret);
+        requestBody.add("scope", SCOPE);
 
-        HttpEntity<MultiValueMap<String,String> >requestHttpEntity=new HttpEntity<>(requestBody,httpHeaders);
-        ResponseEntity<TokenResponse> response=restTemplate.exchange(
-                TOKEN_URL,
-                HttpMethod.POST,
-                requestHttpEntity
-                ,TokenResponse.class
-        );
+        HttpEntity<MultiValueMap<String, String>> requestHttpEntity = new HttpEntity<>(requestBody, httpHeaders);
 
-        if(response.getStatusCode()==HttpStatus.OK && response.getBody()!=null){
+        try {
+            ResponseEntity<TokenResponse> response = restTemplate.exchange(
+                    TOKEN_URL,
+                    HttpMethod.POST,
+                    requestHttpEntity,
+                    TokenResponse.class
+            );
+
+            if (response.getBody() == null) {
+                throw new RuntimeException("Failed to obtain access token: empty response body");
+            }
             return response.getBody();
 
-        }else{
-            throw new RuntimeException("Failed to obtain access token");
-
+        } catch (HttpClientErrorException | HttpServerErrorException e) {
+            throw new RuntimeException("Failed to obtain access token: " + e.getResponseBodyAsString(), e);
         }
-
     }
 
-    public KeycloakRole getRoleByName(String clientId,
+    public KeycloakRole getRoleByName(String clientUuid,
                                       String token,
-                                      String role){
+                                      String role) {
 
-        String url=KEYCLOAK_BASE_URL+"/admin/realms/master/clients/"+clientId+"/roles/"+role;
-        HttpHeaders httpHeaders=new HttpHeaders();
-        httpHeaders.setContentType(MediaType.APPLICATION_JSON);
-         httpHeaders.set("Authorization","Bearer "+token);
+        String url = KEYCLOAK_BASE_URL + "/admin/realms/master/clients/" + clientUuid + "/roles/" + role;
 
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.setBearerAuth(token);
 
-        HttpEntity<Void>requestHttpEntity=new HttpEntity<>(httpHeaders);
-        ResponseEntity<KeycloakRole> response=restTemplate.exchange(
-                url,
-                HttpMethod.GET,
-                requestHttpEntity
-                ,KeycloakRole.class
-        );
+        HttpEntity<Void> requestHttpEntity = new HttpEntity<>(httpHeaders);
 
-        if(response.getStatusCode()==HttpStatus.OK && response.getBody()!=null){
+        try {
+            ResponseEntity<KeycloakRole> response = restTemplate.exchange(
+                    url,
+                    HttpMethod.GET,
+                    requestHttpEntity,
+                    KeycloakRole.class
+            );
+
+            if (response.getBody() == null) {
+                throw new RuntimeException("Role not found: " + role);
+            }
             return response.getBody();
 
-        }else{
-            throw new RuntimeException("Failed to obtain access token");
-
+        } catch (HttpClientErrorException | HttpServerErrorException e) {
+            throw new RuntimeException("Failed to fetch role " + role + ": " + e.getResponseBodyAsString(), e);
         }
     }
 
     public KeycloakUserDTO fetchFirstUserByUsername(String username,
-                                                    String token){
+                                                    String token) {
 
-        String url=KEYCLOAK_BASE_URL+"/admin/realms/master/users?username="+username;
-        HttpHeaders httpHeaders=new HttpHeaders();
-        httpHeaders.setContentType(MediaType.APPLICATION_JSON);
+        String url = KEYCLOAK_BASE_URL + "/admin/realms/master/users?username=" + username;
+
+        HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.setBearerAuth(token);
 
+        HttpEntity<Void> requestHttpEntity = new HttpEntity<>(httpHeaders);
 
-        HttpEntity<String>requestHttpEntity=new HttpEntity<>(httpHeaders);
-        ResponseEntity<KeycloakUserDTO[]> response=restTemplate.exchange(
-                url,
-                HttpMethod.GET,
-                requestHttpEntity
-                ,KeycloakUserDTO[].class
-        );
+        try {
+            ResponseEntity<KeycloakUserDTO[]> response = restTemplate.exchange(
+                    url,
+                    HttpMethod.GET,
+                    requestHttpEntity,
+                    KeycloakUserDTO[].class
+            );
 
-        if(response.getStatusCode()==HttpStatus.OK && response.getBody()!=null){
+            // FIX: empty array bhi non-null hota hai, length check zaroori
+            if (response.getBody() == null || response.getBody().length == 0) {
+                throw new RuntimeException("User not found with username " + username);
+            }
             return response.getBody()[0];
 
-        }else{
-            throw new RuntimeException("user not found with username "+username);
-
+        } catch (HttpClientErrorException | HttpServerErrorException e) {
+            throw new RuntimeException("Failed to fetch user " + username + ": " + e.getResponseBodyAsString(), e);
         }
-
     }
 
-    public void assignRoleToUser(String userId, String clientId, List<KeycloakRole> roles,String token){
+    public void assignRoleToUser(String userId, String clientUuid, List<KeycloakRole> roles, String token) {
 
+        String url = KEYCLOAK_BASE_URL + "/admin/realms/master/users/" + userId + "/role-mappings/clients/" + clientUuid;
 
-        String url=KEYCLOAK_BASE_URL+"/admin/realms/master/users/"+userId+"/role-mappings/clients/"+clientId;
-        HttpHeaders httpHeaders=new HttpHeaders();
+        HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.setContentType(MediaType.APPLICATION_JSON);
         httpHeaders.setBearerAuth(token);
 
+        HttpEntity<List<KeycloakRole>> requestHttpEntity = new HttpEntity<>(roles, httpHeaders);
 
-        HttpEntity<List<KeycloakRole>>requestHttpEntity=new HttpEntity<>(roles,httpHeaders);
-
-
-        try{
-            ResponseEntity<String> response=restTemplate.exchange(
+        try {
+            restTemplate.exchange(
                     url,
                     HttpMethod.POST,
-                    requestHttpEntity
-                    ,String.class
+                    requestHttpEntity,
+                    String.class
             );
-        } catch (RuntimeException e) {
-            throw new RuntimeException("Failed to assign new Role"+e.getMessage());
+        } catch (HttpClientErrorException | HttpServerErrorException e) {
+            throw new RuntimeException("Failed to assign role: " + e.getResponseBodyAsString(), e);
         }
-
     }
-
-
 }

@@ -1,10 +1,9 @@
 package com.akhil.model;
 
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import com.akhil.domain.UserRole;
+import com.akhil.repo.UserRepo;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
@@ -33,8 +32,8 @@ public class User {
     private  String phone;
     @NotBlank(message = "Password is mandatory")
     private String password;
-    @NotBlank(message = "role is mandatory")
-    private String role;
+    @Column(nullable = false)
+    private UserRole role;
     @CreationTimestamp
     private LocalDateTime createdAt;
     @UpdateTimestamp
