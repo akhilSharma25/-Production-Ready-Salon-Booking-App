@@ -2,7 +2,9 @@ package com.akhil.service.imp;
 
 import com.akhil.exception.UserException;
 import com.akhil.model.User;
+import com.akhil.payload.DTO.KeycloakUserDTO;
 import com.akhil.repo.UserRepo;
+import com.akhil.service.KeycloakService;
 import com.akhil.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -17,6 +19,9 @@ public class UserServiceImp implements UserService {
 
     @Autowired
     private UserRepo repo;
+
+    @Autowired
+    private KeycloakService keycloakService;
 
     @Override
     public User createUser(User user) {
@@ -58,5 +63,12 @@ public class UserServiceImp implements UserService {
     @Override
     public List<User> getAllUser() {
         return repo.findAll();
+    }
+
+    @Override
+    public User getUserFromJwt(String jwt) {
+        KeycloakUserDTO keycloakUserDTO=keycloakService.fetchUserProfileByJwt(jwt);
+        User user=repo.findByEmail(keycloakUserDTO.getEmail());
+        return user;
     }
 }

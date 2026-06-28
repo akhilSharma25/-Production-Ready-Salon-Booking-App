@@ -6,6 +6,7 @@ import com.akhil.repo.UserRepo;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -33,6 +34,7 @@ public class User {
     @NotBlank(message = "Password is mandatory")
     private String password;
     @Column(nullable = false)
+    @NotNull(message = "role is mandatory")
     private UserRole role;
     @CreationTimestamp
     private LocalDateTime createdAt;

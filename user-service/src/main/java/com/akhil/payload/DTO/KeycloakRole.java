@@ -1,5 +1,6 @@
 package com.akhil.payload.DTO;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
@@ -12,9 +13,10 @@ public class KeycloakRole {
     private String id;
     private String name;
     private String description;
-    @JsonProperty
+    @JsonIgnore
     private boolean enabled;
     private boolean clientRole;
+    private boolean composite;
     private String containerId;
     private Map<String,Object> attributes;
 

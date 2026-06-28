@@ -45,4 +45,11 @@ public class UserController {
         String response = service.deleteUser(id);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
+
+    @GetMapping("/profile")
+    public  ResponseEntity<User> getUserProfile(@RequestHeader("Authorization") String jwt){
+        User user=service.getUserFromJwt(jwt);
+        return ResponseEntity.ok(user);
+    }
+
 }

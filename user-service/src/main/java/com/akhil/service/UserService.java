@@ -12,4 +12,5 @@ public interface UserService {
     User updateUser(Long id,User user);
 
     List<User> getAllUser();
+    User getUserFromJwt(String jwt);
 }
