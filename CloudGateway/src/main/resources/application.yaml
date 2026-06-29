@@ -43,6 +43,22 @@ spring:
               predicates:
                 - Path=/api/service-offerings/**
 
+            - id: NOTIFICATION-SERVICE
+              uri: lb://NOTIFICATION-SERVICE
+              predicates:
+                - Path=/api/notifications/**
+
+            - id: REVIEW-SERVICE
+              uri: lb://REVIEW-SERVICE
+              predicates:
+                - Path=/api/reviews/**
+
+security:
+  oauth2:
+    resourceserver:
+      jwt:
+        jwk-set-uri: "http://localhost:8080/realms/master/protocol/openid-connect/certs"
+
 eureka:
   instance:
     prefer-ip-address: true
