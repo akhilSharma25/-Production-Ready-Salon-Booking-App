@@ -39,8 +39,12 @@ public class SecurityConfig {
                 ).hasAnyRole("CUSTOMER", "SALON_OWNER", "ADMIN")
 
                 .anyExchange().authenticated()
+
+        )   .oauth2ResourceServer(oauth2 -> oauth2
+                .jwt(jwt -> jwt.jwtAuthenticationConverter(grantAuthoritiesExtractor()))
         );
 httpSecurity.csrf(ServerHttpSecurity.CsrfSpec::disable);
+
         return httpSecurity.build();
     }
 

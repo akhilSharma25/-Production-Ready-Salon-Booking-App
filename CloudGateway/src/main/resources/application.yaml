@@ -4,14 +4,23 @@ server:
 spring:
   application:
     name: gateway-server
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: "http://localhost:8080/realms/master/protocol/openid-connect/certs"
+
   cloud:
     gateway:
+      # COMPATIBILITY UPDATE: All gateway properties for WebFlux now live here
       server:
         webflux:
           discovery:
             locator:
               enabled: true
               lower-case-service-id: true
+
           routes:
             - id: BOOKING-SERVICE
               uri: lb://BOOKING-SERVICE
@@ -37,6 +46,8 @@ spring:
               uri: lb://USER-SERVICE
               predicates:
                 - Path=/auth/**,/api/admin/users/**,/api/users/**,/users/**
+#              filters:
+#                - TokenRelay=
 
             - id: SERVICE-OFFERING
               uri: lb://SERVICE-OFFERING
@@ -52,12 +63,6 @@ spring:
               uri: lb://REVIEW-SERVICE
               predicates:
                 - Path=/api/reviews/**
-
-security:
-  oauth2:
-    resourceserver:
-      jwt:
-        jwk-set-uri: "http://localhost:8080/realms/master/protocol/openid-connect/certs"
 
 eureka:
   instance:

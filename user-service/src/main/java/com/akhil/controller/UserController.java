@@ -48,7 +48,12 @@ public class UserController {
 
     @GetMapping("/profile")
     public  ResponseEntity<User> getUserProfile(@RequestHeader("Authorization") String jwt){
-        User user=service.getUserFromJwt(jwt);
+        System.out.println("Token"+jwt);
+        String cleanJwt = jwt;
+        if (jwt != null && jwt.startsWith("Bearer ")) {
+            cleanJwt = jwt.substring(7); // "Bearer " ke 7 characters hata kar sirf pure token nikalega
+        }
+        User user=service.getUserFromJwt(cleanJwt);
         return ResponseEntity.ok(user);
     }
 
