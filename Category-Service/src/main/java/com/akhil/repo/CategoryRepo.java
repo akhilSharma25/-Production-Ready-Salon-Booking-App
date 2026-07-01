@@ -8,4 +8,6 @@ import java.util.Set;
 public interface CategoryRepo extends JpaRepository<Category,Long> {
 
     Set<Category> findBySalonId(Long id);
+
+    Category findByIdAndSalonId(Long id,Long salonId);
 }

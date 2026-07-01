@@ -45,4 +45,13 @@ public class CategoryServiceImp implements CategoryService {
         repo.deleteById(id);
 
     }
+
+    @Override
+    public Category findByIdAndSalonId(Long id, Long salonId) {
+        Category category= repo.findByIdAndSalonId(id,salonId);
+        if(category==null){
+            throw new RuntimeException("Category not found...");
+        }
+        return category;
+    }
 }

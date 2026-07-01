@@ -5,6 +5,9 @@ import com.akhil.DTO.SaloonDTO;
 import com.akhil.DTO.ServiceDto;
 import com.akhil.model.ServiceOffering;
 import com.akhil.service.ServiceOfferingService;
+import com.akhil.service.client.CategoryFeignClient;
+import com.akhil.service.client.SaloonFeignClient;
+import com.akhil.service.client.UserFeignClient;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,16 +20,17 @@ public class SalonServiceOfferingController {
 
     private final ServiceOfferingService service;
 
+    private final SaloonFeignClient salonFeignClient;
+    private final CategoryFeignClient categoryFeignClient;
     @PostMapping
-    public ResponseEntity<ServiceOffering> createService(@RequestBody ServiceDto serviceDto
+    public ResponseEntity<ServiceOffering> createService(@RequestBody ServiceDto serviceDto,@RequestHeader("Authorization")String jwt
 
     ){
 
-        SaloonDTO saloonDTO=new SaloonDTO();
-        saloonDTO.setId(1L);
+        SaloonDTO saloonDTO=salonFeignClient.getSalonByOwnerId(jwt).getBody();
 
-        CategoryDto categoryDto=new CategoryDto();
-        categoryDto.setId(serviceDto.getCategoryId());
+        CategoryDto categoryDto=categoryFeignClient.getCategoryByIdAndSalon(serviceDto.getCategoryId(),saloonDTO.getId()).getBody();
+
         ServiceOffering serviceOfferings=service.createService(saloonDTO,serviceDto,categoryDto);
         return ResponseEntity.ok(serviceOfferings);
 

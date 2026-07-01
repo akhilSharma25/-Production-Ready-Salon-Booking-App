@@ -15,6 +15,7 @@ public class ServiceOfferingController {
 
     private final ServiceOfferingService service;
 
+
     @GetMapping("/salon/{salonId}")
     public ResponseEntity<Set<ServiceOffering>> getServicesBySalonId(@PathVariable Long salonId, @RequestParam(required = false) Long categoryId){
 
