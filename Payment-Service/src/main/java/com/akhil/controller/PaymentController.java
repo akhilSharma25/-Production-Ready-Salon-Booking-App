@@ -6,6 +6,10 @@ import com.akhil.payload.DTO.BookingDTO;
 import com.akhil.payload.DTO.UserDTO;
 import com.akhil.payload.response.PaymentLinkResponse;
 import com.akhil.service.PaymentService;
+import com.akhil.service.client.PaymentFeignClient;
+import com.akhil.service.client.SaloonFeignClient;
+import com.akhil.service.client.ServiceOfferingFeignClient;
+import com.akhil.service.client.UserFeignClient;
 import com.razorpay.RazorpayException;
 import com.stripe.exception.StripeException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,16 +23,27 @@ public class PaymentController {
     @Autowired
     private PaymentService service;
 
+    @Autowired
+    private SaloonFeignClient saloonFeignClient;
+
+    @Autowired
+    private UserFeignClient userFeignClient;
+
+    @Autowired
+    private ServiceOfferingFeignClient serviceOfferingFeignClient;
+
+    @Autowired
+    private PaymentFeignClient paymentFeignClient;
+
     @PostMapping("/create")
     public ResponseEntity<PaymentLinkResponse> createPaymentLink(
             @RequestBody BookingDTO bookingDTO,
             @RequestParam PaymentMethod paymentMethod
+            ,
+            @RequestHeader("Authorization")String jwt
             ) throws StripeException, RazorpayException {
 
-        UserDTO userDTO=new UserDTO();
-        userDTO.setFullName("Ashok");
-        userDTO.setEmail("ashok@gmail.com");
-        userDTO.setId(1L);
+        UserDTO userDTO=userFeignClient.getUserProfile(jwt).getBody();
 
         PaymentLinkResponse res=service.createOrder(userDTO,bookingDTO,paymentMethod);
         return ResponseEntity.ok(res);

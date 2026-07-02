@@ -2,10 +2,15 @@ package com.akhil.controller;
 
 import com.akhil.DTO.*;
 import com.akhil.domain.BookingStatus;
+import com.akhil.domain.PaymentMethod;
 import com.akhil.mapper.BookingMapper;
 import com.akhil.model.Booking;
 import com.akhil.model.SalonReport;
 import com.akhil.service.BookingService;
+import com.akhil.service.client.PaymentFeignClient;
+import com.akhil.service.client.SaloonFeignClient;
+import com.akhil.service.client.ServiceOfferingFeignClient;
+import com.akhil.service.client.UserFeignClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
@@ -25,38 +30,45 @@ public class BookingController {
     @Autowired
     private BookingService service;
 
+    @Autowired
+    private SaloonFeignClient saloonFeignClient;
+
+    @Autowired
+    private UserFeignClient userFeignClient;
+
+    @Autowired
+    private ServiceOfferingFeignClient serviceOfferingFeignClient;
+
+    @Autowired
+    private PaymentFeignClient paymentFeignClient;
+
     @PostMapping
-    public ResponseEntity<Booking> createBooking(@RequestParam Long salonId, @RequestBody BookingRequest bookingRequest){
+    public ResponseEntity<Booking> createBooking(@RequestParam Long salonId, @RequestParam PaymentMethod paymentMethod, @RequestBody BookingRequest bookingRequest, @RequestHeader("Authorization") String jwt){
 
 
-        UserDTO userDTO=new UserDTO();
-        userDTO.setId(1L);
+        UserDTO userDTO=userFeignClient.getUserProfile(jwt).getBody();
 
-        SaloonDTO saloonDTO=new SaloonDTO();
-        saloonDTO.setId(salonId);
-        saloonDTO.setOpenTime(LocalTime.of(9, 0));   // Subah 09:00 baje khulega
-        saloonDTO.setCloseTime(LocalTime.of(21, 0));
-
-        Set<ServiceDto> serviceDtoSet=new HashSet<>();
-        ServiceDto serviceDto1=new ServiceDto();
-        serviceDto1.setId(1L);
-        serviceDto1.setPrice(399);
-        serviceDto1.setDuration(45);
-        serviceDto1.setName("Hair cut for men");
-        serviceDtoSet.add(serviceDto1);
+        SaloonDTO saloonDTO=saloonFeignClient.getSalonById(salonId).getBody();
+        Set<ServiceDto> serviceDtoSet=serviceOfferingFeignClient.getServicesById(bookingRequest.getServiceIds()).getBody();
 
 
         Booking booking=service.createBooking(bookingRequest,userDTO,saloonDTO,serviceDtoSet);
+
+        BookingDTO bookingDTO=BookingMapper.bookingDTO(booking);
+        paymentFeignClient.createPaymentLink(bookingDTO,paymentMethod,jwt);
         return ResponseEntity.ok(booking);
 
     }
 
     @GetMapping("/customer")
-    public ResponseEntity<Set<BookingDTO>> getBookingsByCustomer(){
-        UserDTO userDTO=new UserDTO();
-        userDTO.setId(1L);
+    public ResponseEntity<Set<BookingDTO>> getBookingsByCustomer(@RequestHeader("Authorization") String jwt){
+        UserDTO userDTO=userFeignClient.getUserProfile(jwt).getBody();
 
-        List<Booking> bookings=service.getBookingByCustomer(1L);
+
+        if(userDTO==null && userDTO.getId()==null){
+            throw new RuntimeException("User not found from jwt...");
+        }
+        List<Booking> bookings=service.getBookingByCustomer(userDTO.getId());
 
 
         return  ResponseEntity.ok(getBookingDto(bookings));
@@ -64,10 +76,10 @@ public class BookingController {
 
 
     @GetMapping("/salon")
-    public ResponseEntity<Set<BookingDTO>> getBookingsBySalon(){
+    public ResponseEntity<Set<BookingDTO>> getBookingsBySalon(@RequestHeader("Authorization") String jwt){
 
-
-        List<Booking> bookings=service.getBookingBySalon(101L);
+         SaloonDTO saloonDTO=saloonFeignClient.getSalonByOwnerId(jwt).getBody();
+        List<Booking> bookings=service.getBookingBySalon(saloonDTO.getId());
 
 
         return  ResponseEntity.ok(getBookingDto(bookings));
@@ -114,9 +126,11 @@ public class BookingController {
     }
 
     @GetMapping("/report")
-    public ResponseEntity< SalonReport> getSalonReport(){
+    public ResponseEntity< SalonReport> getSalonReport(@RequestHeader("Authorization") String jwt){
 
-      com.akhil.model.SalonReport salonReport =  service.getSalonReport(101L);
+        SaloonDTO saloonDTO=saloonFeignClient.getSalonByOwnerId(jwt).getBody();
+
+        com.akhil.model.SalonReport salonReport =  service.getSalonReport(saloonDTO.getId());
       return ResponseEntity.ok(salonReport);
 
     }
