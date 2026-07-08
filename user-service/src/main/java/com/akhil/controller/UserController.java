@@ -1,6 +1,7 @@
 package com.akhil.controller;
 
 import com.akhil.model.User;
+import com.akhil.payload.DTO.UserDTO;
 import com.akhil.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,8 +30,8 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<User> getUserById(@PathVariable Long id) {
-        User user = service.getUserById(id);
+    public ResponseEntity<UserDTO> getUserById(@PathVariable Long id) {
+        UserDTO user = service.getUserById(id);
         return new ResponseEntity<>(user, HttpStatus.OK);
     }
 
@@ -47,13 +48,14 @@ public class UserController {
     }
 
     @GetMapping("/profile")
-    public  ResponseEntity<User> getUserProfile(@RequestHeader("Authorization") String jwt){
+    public  ResponseEntity<UserDTO> getUserProfile(@RequestHeader("Authorization") String jwt){
         System.out.println("Token"+jwt);
         String cleanJwt = jwt;
         if (jwt != null && jwt.startsWith("Bearer ")) {
             cleanJwt = jwt.substring(7); // "Bearer " ke 7 characters hata kar sirf pure token nikalega
         }
-        User user=service.getUserFromJwt(cleanJwt);
+        UserDTO user=service.getUserFromJwt(cleanJwt);
+        System.out.println("USERDDTO "+user);
         return ResponseEntity.ok(user);
     }
 

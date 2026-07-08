@@ -35,7 +35,7 @@ public class SalonServiceImp implements SaloonService {
     @Override
     public Saloon updateSaloon(SaloonDTO saloonDTO, UserDTO user, Long salonId) throws Exception {
         Saloon exitingSalon=repo.findById(salonId).orElse(null);
-        if(exitingSalon!=null && saloonDTO.getOwnerId().equals(user.getId())){
+        if(exitingSalon!=null && exitingSalon.getOwnerId().equals(user.getId())){
             exitingSalon.setName(saloonDTO.getName());
             exitingSalon.setAddress(saloonDTO.getAddress());
             exitingSalon.setEmail(saloonDTO.getEmail());
@@ -48,7 +48,13 @@ public class SalonServiceImp implements SaloonService {
 
            return repo.save(exitingSalon);
         }
-        throw  new Exception("Salon not exist");
+
+
+        if (!exitingSalon.getOwnerId().equals(user.getId())) {
+            throw new RuntimeException("Access denied");
+        }
+        throw new RuntimeException("Salon not found");
+
     }
 
     @Override

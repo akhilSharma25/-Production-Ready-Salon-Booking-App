@@ -32,9 +32,9 @@ public class PaymentServiceImp implements PaymentService {
     @Value("${razorpay.api.secret}")
     private String razorpaySecretKey;
 
-    @Value("razorpay.api.key")
+    @Value("${razorpay.api.key}")
     private String razorpayApiKey;
-    @Value("stripe.api.key")
+    @Value("${stripe.api.key}")
     private String stripeApiKey;
 
     @Override
@@ -44,9 +44,9 @@ public class PaymentServiceImp implements PaymentService {
         order.setAmount(amount);
         order.setPaymentMethod(paymentMethod);
         order.setBookingId(bookingDto.getId());
-
+        order.setUserId(userDto.getId());
         order.setSalonId(bookingDto.getSalonId());
-
+        System.out.println(order);
         PaymentOrder savedOrder=repo.save(order);
 
         PaymentLinkResponse paymentLinkResponse=new PaymentLinkResponse();
@@ -70,7 +70,8 @@ public class PaymentServiceImp implements PaymentService {
 
             repo.save(savedOrder);
         }
-
+        System.out.println("SavedOrder "+savedOrder);
+        System.out.println(paymentLinkResponse);
 
         return paymentLinkResponse;
     }

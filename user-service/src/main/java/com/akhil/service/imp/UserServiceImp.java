@@ -3,6 +3,7 @@ package com.akhil.service.imp;
 import com.akhil.exception.UserException;
 import com.akhil.model.User;
 import com.akhil.payload.DTO.KeycloakUserDTO;
+import com.akhil.payload.DTO.UserDTO;
 import com.akhil.repo.UserRepo;
 import com.akhil.service.KeycloakService;
 import com.akhil.service.UserService;
@@ -29,10 +30,17 @@ public class UserServiceImp implements UserService {
     }
 
     @Override
-    public User getUserById(Long id) {
+    public UserDTO getUserById(Long id) {
         Optional<User> optional=repo.findById(id);
         if(optional.isPresent()){
-            return optional.get();
+            User user = optional.get();
+
+            UserDTO dto = new UserDTO();
+            dto.setId(user.getId());
+            dto.setFullName(user.getFullName());
+            dto.setEmail(user.getEmail());
+
+            return dto;
         }
         throw  new UserException("User not Found");    }
 
@@ -66,9 +74,14 @@ public class UserServiceImp implements UserService {
     }
 
     @Override
-    public User getUserFromJwt(String jwt) {
+    public UserDTO getUserFromJwt(String jwt) {
         KeycloakUserDTO keycloakUserDTO=keycloakService.fetchUserProfileByJwt(jwt);
-        User user=repo.findByEmail(keycloakUserDTO.getEmail());
-        return user;
+        User user1=repo.findByEmail(keycloakUserDTO.getEmail());
+        UserDTO dto = new UserDTO();
+        dto.setId(user1.getId());
+        dto.setFullName(user1.getFullName());
+        dto.setEmail(user1.getEmail());
+        dto.setRole(user1.getRole());
+        return dto;
     }
 }

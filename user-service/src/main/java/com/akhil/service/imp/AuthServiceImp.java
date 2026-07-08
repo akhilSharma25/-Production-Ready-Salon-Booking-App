@@ -3,6 +3,7 @@ package com.akhil.service.imp;
 import com.akhil.model.User;
 import com.akhil.payload.DTO.SignupDto;
 import com.akhil.payload.DTO.TokenResponse;
+import com.akhil.payload.DTO.UserDTO;
 import com.akhil.payload.response.AuthResponse;
 import com.akhil.repo.UserRepo;
 import com.akhil.service.AuthService;
@@ -22,12 +23,25 @@ public class AuthServiceImp implements AuthService {
     @Override
     public AuthResponse login(String username, String password) {
 
+        User user1 = repo.findByEmail(username);
+
+        if (user1 == null) {
+            throw new RuntimeException("User not found");
+        }
+        UserDTO dto = new UserDTO();
+        dto.setId(user1.getId());
+        dto.setFullName(user1.getFullName());
+        dto.setEmail(user1.getEmail());
+        dto.setRole(user1.getRole());
         TokenResponse tokenResponse=keycloakService.getAdminAccessToken(username,password,"password",null);
 
-        AuthResponse authResponse=new AuthResponse();
+
+        AuthResponse authResponse = new AuthResponse();
         authResponse.setRefresh_token(tokenResponse.getRefreshToken());
         authResponse.setJwt(tokenResponse.getAccessToken());
+        authResponse.setRole(dto.getRole());
         authResponse.setMessage("Login Successfully");
+
         return authResponse;
     }
 

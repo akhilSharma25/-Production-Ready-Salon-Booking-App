@@ -52,7 +52,7 @@ spring:
             - id: SERVICE-OFFERING
               uri: lb://SERVICE-OFFERING
               predicates:
-                - Path=/api/service-offerings/**
+                - Path=/api/service-offering/**,/api/service-offerings/**
 
             - id: NOTIFICATION-SERVICE
               uri: lb://NOTIFICATION-SERVICE

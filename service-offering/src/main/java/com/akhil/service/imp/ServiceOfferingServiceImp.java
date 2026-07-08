@@ -27,7 +27,7 @@ public class ServiceOfferingServiceImp implements ServiceOfferingService {
         serviceOffering.setDuration(serviceDto.getDuration());
         serviceOffering.setPrice(serviceDto.getPrice());
         serviceOffering.setDescription(serviceDto.getDescription());
-        serviceOffering.setSalonId(serviceDto.getSalonId());
+        serviceOffering.setSalonId(salonDto.getId());
         serviceOffering.setCategoryId(serviceDto.getCategoryId());
         return repo.save(serviceOffering);
     }

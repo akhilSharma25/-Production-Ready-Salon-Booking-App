@@ -1,16 +1,17 @@
 package com.akhil.service;
 
 import com.akhil.model.User;
+import com.akhil.payload.DTO.UserDTO;
 
 import java.util.List;
 
 public interface UserService {
 
     User createUser(User user);
-    User getUserById(Long id);
+    UserDTO getUserById(Long id);
     String deleteUser(Long id);
     User updateUser(Long id,User user);
 
     List<User> getAllUser();
-    User getUserFromJwt(String jwt);
+    UserDTO getUserFromJwt(String jwt);
 }

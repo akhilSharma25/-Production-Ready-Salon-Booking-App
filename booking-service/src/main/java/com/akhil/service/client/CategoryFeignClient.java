@@ -8,13 +8,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 @FeignClient("CATEGORY-SERVICE")
 public interface CategoryFeignClient {
-
     @GetMapping("/api/categories/{id}")
-    public ResponseEntity getCategoryById(@PathVariable("id") Long id);
-
+    public ResponseEntity<CategoryDto> getCategoryById(@PathVariable("id") Long id);
     @GetMapping("/api/categories/salon-owner/salon/{salonId}/category/{id}")
-    public ResponseEntity getCategoryByIdAndSalon(
-            @PathVariable("salonId") Long salonId,
-            @PathVariable("id") Long id
-    );
+    public ResponseEntity<CategoryDto> getCategoryByIdAndSalon(@PathVariable Long id,@PathVariable Long salonId);
 }

@@ -43,9 +43,13 @@ public class PaymentController {
             @RequestHeader("Authorization")String jwt
             ) throws StripeException, RazorpayException {
 
-        UserDTO userDTO=userFeignClient.getUserProfile(jwt).getBody();
+        System.out.println("Payment Controller Hit");
 
+        UserDTO userDTO=userFeignClient.getUserProfile(jwt).getBody();
+        System.out.println(userDTO);
+        System.out.println("User ID = " + userDTO.getId());
         PaymentLinkResponse res=service.createOrder(userDTO,bookingDTO,paymentMethod);
+        System.out.println("Done");
         return ResponseEntity.ok(res);
     }
     @GetMapping("/{paymentOrderId}")

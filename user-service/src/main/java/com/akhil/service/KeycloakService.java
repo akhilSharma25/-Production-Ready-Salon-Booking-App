@@ -213,8 +213,12 @@ public class KeycloakService {
         String url = KEYCLOAK_BASE_URL + "/realms/master/protocol/openid-connect/userinfo";
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.setContentType(MediaType.APPLICATION_JSON);
+        System.out.println("Received Token = " + token);
+
         String rawToken = token.startsWith("Bearer ") ? token.substring(7) : token;
         httpHeaders.setBearerAuth(rawToken);
+        System.out.println("rawToken Token = " + rawToken);
+
         HttpEntity<String> requestHttpEntity = new HttpEntity<>(httpHeaders);
         try {
             ResponseEntity<KeycloakUserDTO> response = restTemplate.exchange(

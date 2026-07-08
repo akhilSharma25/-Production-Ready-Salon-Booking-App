@@ -19,11 +19,17 @@ public class SalonCategoryController {
     @Autowired
     private SaloonFeignClient saloonFeignClient;
 
-    @PostMapping()
+    @PostMapping
     public ResponseEntity<Category> createCategory(@RequestBody Category category,@RequestHeader("Authorization")String jwt){
 
-        SaloonDTO saloonDTO=saloonFeignClient.getSalonByOwnerId(jwt).getBody();
-        Category saveCategory=service.createCategory(category,saloonDTO);
+        ResponseEntity<SaloonDTO> response = saloonFeignClient.getSalonByOwnerId(jwt);
+
+        if(response.getBody()==null){
+            throw new RuntimeException("Salon not found");
+        }
+
+        SaloonDTO salon = response.getBody();
+        Category saveCategory=service.createCategory(category,salon);
         return ResponseEntity.ok(saveCategory);
     }
 

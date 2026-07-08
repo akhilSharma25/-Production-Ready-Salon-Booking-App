@@ -85,6 +85,7 @@ public class SalonController {
 
         Saloon saloons= service.getSalonByOwnerId(user.getId());
 
+
         SaloonDTO saloonDTO=SalonMapper.mapToDTO(saloons);
         return  new ResponseEntity<>(saloonDTO,HttpStatus.OK);
     }

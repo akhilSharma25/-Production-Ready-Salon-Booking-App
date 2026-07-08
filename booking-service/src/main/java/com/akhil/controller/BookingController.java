@@ -55,7 +55,8 @@ public class BookingController {
         Booking booking=service.createBooking(bookingRequest,userDTO,saloonDTO,serviceDtoSet);
 
         BookingDTO bookingDTO=BookingMapper.bookingDTO(booking);
-        paymentFeignClient.createPaymentLink(bookingDTO,paymentMethod,jwt);
+//        paymentFeignClient.createPaymentLink(bookingDTO,paymentMethod,jwt);
+        System.out.println(        paymentFeignClient.createPaymentLink(bookingDTO,paymentMethod,jwt));
         return ResponseEntity.ok(booking);
 
     }
@@ -65,7 +66,7 @@ public class BookingController {
         UserDTO userDTO=userFeignClient.getUserProfile(jwt).getBody();
 
 
-        if(userDTO==null && userDTO.getId()==null){
+        if(userDTO==null || userDTO.getId()==null){
             throw new RuntimeException("User not found from jwt...");
         }
         List<Booking> bookings=service.getBookingByCustomer(userDTO.getId());

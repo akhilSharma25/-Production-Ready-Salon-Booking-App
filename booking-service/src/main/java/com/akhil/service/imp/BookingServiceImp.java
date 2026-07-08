@@ -31,7 +31,9 @@ public class BookingServiceImp implements BookingService {
         LocalDateTime bookingEndTime=bookingStartTime.plusMinutes(totalDuration);
 
         Boolean isSlotAvailable=isTimeSlotAvailable(saloonDTO,bookingStartTime,bookingEndTime);
-
+        if(!isSlotAvailable){
+            throw new RuntimeException("Slot not available");
+        }
         int totalPrice=serviceDto.stream().mapToInt(ServiceDto::getPrice).sum();
         Set<Long>idsList=serviceDto.stream().map(ServiceDto::getId).collect(Collectors.toSet());
 
