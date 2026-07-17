@@ -43,7 +43,7 @@ public class BookingController {
     private PaymentFeignClient paymentFeignClient;
 
     @PostMapping
-    public ResponseEntity<Booking> createBooking(@RequestParam Long salonId, @RequestParam PaymentMethod paymentMethod, @RequestBody BookingRequest bookingRequest, @RequestHeader("Authorization") String jwt){
+    public ResponseEntity<PaymentLinkResponse> createBooking(@RequestParam Long salonId, @RequestParam PaymentMethod paymentMethod, @RequestBody BookingRequest bookingRequest, @RequestHeader("Authorization") String jwt){
 
 
         UserDTO userDTO=userFeignClient.getUserProfile(jwt).getBody();
@@ -53,11 +53,14 @@ public class BookingController {
 
 
         Booking booking=service.createBooking(bookingRequest,userDTO,saloonDTO,serviceDtoSet);
+        if(serviceDtoSet==null){
+            throw new RuntimeException("Services not found");
+        }
 
         BookingDTO bookingDTO=BookingMapper.bookingDTO(booking);
-//        paymentFeignClient.createPaymentLink(bookingDTO,paymentMethod,jwt);
-        System.out.println(        paymentFeignClient.createPaymentLink(bookingDTO,paymentMethod,jwt));
-        return ResponseEntity.ok(booking);
+        PaymentLinkResponse paymentLinkResponse=    paymentFeignClient.createPaymentLink(bookingDTO,paymentMethod,jwt).getBody();
+//        System.out.println(        paymentFeignClient.createPaymentLink(bookingDTO,paymentMethod,jwt));
+        return ResponseEntity.ok(paymentLinkResponse);
 
     }
 
