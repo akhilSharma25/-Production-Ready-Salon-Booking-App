@@ -17,5 +17,7 @@ public class NotificationsMapper {
         notificationDto.setUserId(notification.getUserId());
         notificationDto.setSalonId(notification.getSalonId());
         notificationDto.setCreatedAt(notification.getCreatedAt());
+
+        return  notificationDto;
     }
 }

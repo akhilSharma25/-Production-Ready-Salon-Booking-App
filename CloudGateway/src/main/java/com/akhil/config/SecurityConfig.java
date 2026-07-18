@@ -22,7 +22,7 @@ public class SecurityConfig {
 
         httpSecurity.authorizeExchange(exchange -> exchange
                 .pathMatchers("/auth/**").permitAll()
-                .pathMatchers("/api/notifications/ws/**").permitAll()
+                .pathMatchers("/api/notifications/**").permitAll()
 
                 // Specific (salon-owner only) FIRST
                 .pathMatchers(
