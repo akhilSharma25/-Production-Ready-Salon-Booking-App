@@ -2,6 +2,8 @@ package com.akhil.service.imp;
 
 import com.akhil.domain.PaymentMethod;
 import com.akhil.domain.PaymentOrderStatus;
+import com.akhil.messaging.BookingEventProducer;
+import com.akhil.messaging.NotificationEventProducer;
 import com.akhil.model.PaymentOrder;
 import com.akhil.payload.DTO.BookingDTO;
 import com.akhil.payload.DTO.UserDTO;
@@ -17,15 +19,24 @@ import com.stripe.exception.StripeException;
 import com.stripe.model.checkout.Session;
 import com.stripe.param.checkout.SessionCreateParams;
 import org.json.JSONObject;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+
+import javax.management.Notification;
 
 @Service
 public class PaymentServiceImp implements PaymentService {
 
     @Autowired
     private PaymentRepo repo;
+
+    @Autowired
+    private BookingEventProducer bookingEventProducer;
+
+    @Autowired
+    private NotificationEventProducer notificationEventProducer;
 
     @Value("${stripe.api.secret}")
     private String stripeSecretKey;
@@ -139,6 +150,8 @@ public class PaymentServiceImp implements PaymentService {
 
                 if(status.equals("captured")){
                     //produce kafka event
+                   bookingEventProducer.sentBookingUpdateEvent(paymentOrder);
+                   notificationEventProducer.notificationEvent(paymentOrder.getUserId(), paymentOrder.getBookingId(), paymentOrder.getSalonId());
                     paymentOrder.setStatus(PaymentOrderStatus.SUCCESS);
                     repo.save(paymentOrder);
                     return  true;
