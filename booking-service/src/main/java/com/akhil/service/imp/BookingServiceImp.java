@@ -1,9 +1,6 @@
 package com.akhil.service.imp;
 
-import com.akhil.DTO.BookingRequest;
-import com.akhil.DTO.SaloonDTO;
-import com.akhil.DTO.ServiceDto;
-import com.akhil.DTO.UserDTO;
+import com.akhil.DTO.*;
 import com.akhil.domain.BookingStatus;
 import com.akhil.model.Booking;
 import com.akhil.model.SalonReport;
@@ -144,5 +141,15 @@ public class BookingServiceImp implements BookingService {
         report.setTotalRefund(totalRefund);
 
         return report;
+    }
+
+    @Override
+    public Booking bookingSuccess(PaymentOrder order) {
+
+        Booking existingBooking=getBookingById(order.getBookingId());
+        existingBooking.setStatus(BookingStatus.CONFIRMED);
+
+
+        return repo.save(existingBooking);
     }
 }

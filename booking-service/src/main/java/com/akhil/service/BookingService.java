@@ -1,9 +1,6 @@
 package com.akhil.service;
 
-import com.akhil.DTO.BookingRequest;
-import com.akhil.DTO.SaloonDTO;
-import com.akhil.DTO.ServiceDto;
-import com.akhil.DTO.UserDTO;
+import com.akhil.DTO.*;
 import com.akhil.domain.BookingStatus;
 import com.akhil.model.Booking;
 import com.akhil.model.SalonReport;
@@ -21,5 +18,7 @@ public interface BookingService {
     Booking updateBooking(Long bookingId, BookingStatus status);
     List<Booking> getBookingsByDate(LocalDate date,Long salonId);
     SalonReport getSalonReport(Long salonId);
+
+    Booking bookingSuccess(PaymentOrder order);
 
 }
